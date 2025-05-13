@@ -1,0 +1,69 @@
+vars:
+  address-groups:
+    HOME_NET: "[any]"
+    EXTERNAL_NET: "!$HOME_NET"
+
+default-rule-path: /etc/suricata/rules
+
+rule-files:
+  - suricata.rules  # tu peux aussi inclure "emerging-*.rules" si tu les télécharges
+
+outputs:
+  eve-log:
+    enabled: yes
+    filetype: regular
+    filename: eve.json
+    types:
+      - alert:
+          payload: yes
+          metadata: yes
+          packet: yes
+      - flow
+      - http
+      - ssh
+      - dns
+      - tls
+      - ftp
+      - smtp
+      - mysql
+      - netflow
+      - stats
+      - flow
+      - fileinfo
+      - http2
+      - anomaly
+      - metadata
+
+app-layer:
+  protocols:
+    tls:
+      enabled: yes
+    http:
+      enabled: yes
+    ssh:
+      enabled: yes
+    ftp:
+      enabled: yes
+    smtp:
+      enabled: yes
+    mysql:
+      enabled: yes
+    dcerpc:
+      enabled: yes
+    dns:
+      tcp:
+        enabled: yes
+      udp:
+        enabled: yes
+    smb:
+      enabled: yes
+
+stream:
+  memcap: 64mb
+  checksum-validation: yes      # validate checksums, reject invalid
+  reassembly:
+    memcap: 128mb
+    depth: 1mb
+    toserver-chunk-size: 2560
+    toclient-chunk-size: 2560
+
