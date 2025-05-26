@@ -1,0 +1,38 @@
+FROM kalilinux/kali-rolling
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN echo 'Acquire::AllowInsecureRepositories "true";' > /etc/apt/apt.conf.d/99insecure && \
+    echo 'Acquire::AllowDowngradeToInsecureRepositories "true";' >> /etc/apt/apt.conf.d/99insecure && \
+    apt-get update --allow-unauthenticated && \
+    apt-get install --allow-unauthenticated -y gnupg curl && \
+    curl -fsSL https://archive.kali.org/archive-key.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/kali.gpg && \
+    rm /etc/apt/apt.conf.d/99insecure
+
+RUN apt-get update && \
+    apt-get install -y \
+    iputils-ping \
+    net-tools \
+    dnsutils \
+    nmap \
+    hydra \
+    nikto \
+    sqlmap \
+    netcat-traditional \
+    whois \
+    metasploit-framework \
+    wireshark \
+    tshark \
+    tcpdump \
+    curl \
+    git \
+    python3 \
+    python3-pip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir \
+    scapy \
+    pwntools \
+    shodan
+
+CMD ["/bin/bash"]
