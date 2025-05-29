@@ -10,3 +10,7 @@ kali	Attaquant (nmap, hydra…)	172.28.0.14	Dokerfile.kali
 victim	Ubuntu + services & BDD	172.28.0.15	Dockerfile.victim
 ```
 
+# Creation d'un mots de passe pour le elasticsearch 
+docker exec -it elasticsearch bin/elasticsearch-reset-password -u kibana_system -b
+
+docker exec -it elasticsearch bin/elasticsearch-reset-password -u elastic -b

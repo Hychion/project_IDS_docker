@@ -2,37 +2,66 @@ FROM kalilinux/kali-rolling
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN echo 'Acquire::AllowInsecureRepositories "true";' > /etc/apt/apt.conf.d/99insecure && \
-    echo 'Acquire::AllowDowngradeToInsecureRepositories "true";' >> /etc/apt/apt.conf.d/99insecure && \
-    apt-get update --allow-unauthenticated && \
-    apt-get install --allow-unauthenticated -y gnupg curl && \
-    curl -fsSL https://archive.kali.org/archive-key.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/kali.gpg && \
-    rm /etc/apt/apt.conf.d/99insecure
+# Étape 1 : Fix des clés GPG + configuration des dépôts sécurisés
+RUN apt-get update --allow-insecure-repositories || true && \
+    apt-get install -y curl wget gnupg --allow-unauthenticated || true && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://archive.kali.org/archive-key.asc | gpg --dearmor -o /etc/apt/keyrings/kali.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/kali.gpg] http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" > /etc/apt/sources.list
 
-RUN apt-get update && \
-    apt-get install -y \
-    iputils-ping \
-    net-tools \
-    dnsutils \
-    nmap \
-    hydra \
-    nikto \
-    sqlmap \
-    netcat-traditional \
-    whois \
-    metasploit-framework \
-    wireshark \
-    tshark \
-    tcpdump \
-    curl \
+# Mise à jour complète
+RUN apt-get update && apt-get upgrade -y
+
+# Étape 2 : Installation des outils et librairies
+RUN apt-get install -y \
     git \
+    curl \
+    wget \
+    unzip \
+    nano \
+    net-tools \
+    iputils-ping \
+    nmap \
+    seclists \
+    wordlists \
     python3 \
     python3-pip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    python3-venv \
+    vim \
+    tshark \
+    hydra \
+    nikto \
+    netcat-traditional \
+    default-libmysqlclient-dev \
+    gcc \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    pkg-config
 
-RUN pip3 install --no-cache-dir \
-    scapy \
-    pwntools \
-    shodan
 
+# Étape 3 : Préparation des wordlists
+RUN gzip -d /usr/share/wordlists/rockyou.txt.gz || true && \
+    mkdir -p /opt/wordlists && \
+    cp /usr/share/wordlists/rockyou.txt /opt/wordlists/ && \
+    cp -r /usr/share/seclists /opt/wordlists/seclists
+
+# Étape 4 : Installation de mysqlclient dans un venv pour éviter PEP 668
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install mysqlclient
+
+# Ajout au PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Nettoyage
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Répertoire par défaut
+WORKDIR /opt
+
+# Shell interactif
 CMD ["/bin/bash"]

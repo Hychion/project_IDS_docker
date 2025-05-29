@@ -9,33 +9,47 @@ networks:
           gateway: 172.28.0.1
 
 services:
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - bootstrap.memory_lock=true
     ports:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     networks:
       elk_net:
         ipv4_address: 172.28.0.10
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.0
+    image: docker.elastic.co/kibana/kibana:8.13.2
     container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://172.28.0.10:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD="A_V74ti4Tf1lELGLTD=-" # TODO Update if reboot
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=5601
+      - NODE_OPTIONS=--max-old-space-size=2048
+      - XPACK_SECURITY_ENCRYPTIONKEY=changemechangemechangemechangeme
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=changemechangemechangemechangeme
+      - XPACK_REPORTING_ENCRYPTIONKEY=changemechangemechangemechangeme
     ports:
       - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     depends_on:
       - elasticsearch
     networks:
       elk_net:
-        ipv4_address: 172.28.0.11
+        ipv4_address: 172.28.0.12
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
@@ -44,11 +58,17 @@ services:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
       - ./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - ./suricata/logs:/mnt/suricata
+    environment:
+      - LS_JAVA_OPTS=-Xms1g -Xmx2g
+      - xpack.monitoring.enabled=false
+      - ELASTICSEARCH_HOSTS=http://172.28.0.10:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD="H05OjtPuQI-F2_CK-yUt"  # TODO Update if reboot
     depends_on:
       - elasticsearch
     networks:
       elk_net:
-        ipv4_address: 172.28.0.12
+        ipv4_address: 172.28.0.13
 
   suricata:
     image: jasonish/suricata:latest
@@ -63,7 +83,7 @@ services:
     command: -i eth0
     networks:
       elk_net:
-        ipv4_address: 172.28.0.13
+        ipv4_address: 172.28.0.14
 
   victim:
     build:
@@ -78,21 +98,16 @@ services:
       elk_net:
         ipv4_address: 172.28.0.15
 
-  attacker:
+  kali:
     build:
       context: .
       dockerfile: Dokerfile.kali
     container_name: kali
     tty: true
     stdin_open: true
-    volumes:
-      - ./scripts:/opt/scripts
     networks:
       elk_net:
-        ipv4_address: 172.28.0.14
-    command: bash -c "sleep 10 && bash /opt/scripts/attack-demo.sh && bash"
+        ipv4_address: 172.28.0.16
 
 volumes:
   esdata:
-
-
