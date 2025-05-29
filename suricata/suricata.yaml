@@ -1,0 +1,81 @@
+%YAML 1.1
+---
+# Suricata configuration file for Docker-based deployment
+
+vars:
+  address-groups:
+    HOME_NET: "[172.28.0.0/16]"   # même subnet que docker-compose
+    EXTERNAL_NET: "!$HOME_NET"
+
+default-log-dir: /var/log/suricata
+
+af-packet:
+  - interface: eth0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+
+outputs:
+
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            payload: yes
+            payload-printable: yes
+            metadata: yes
+            packet: yes
+        - dns:
+            query: yes
+            answer: yes
+        - http:
+            extended: yes
+        - tls:
+            extended: yes
+        - flow:
+            metadata: yes
+        - ssh
+        - stats:
+            totals: yes
+            threads: yes
+        - fileinfo
+        - anomaly
+
+  - stats:
+      enabled: yes
+      filename: stats.log
+
+logging:
+  default-log-level: notice
+  outputs:
+    - console:
+        enabled: yes
+    - file:
+        enabled: yes
+        level: info
+        filename: suricata.log
+
+detect-engine:
+  - profile: medium
+
+threading:
+  set-cpu-affinity: no
+  cpu-affinity:
+    - management-cpu-set:
+        cpu: [0]
+    - receive-cpu-set:
+        cpu: [1]
+    - worker-cpu-set:
+        cpu: [2,3]
+        mode: "exclusive"
+        prio: "high"
+
+# Rule sources
+rule-files:
+  - /etc/suricata/rules/suricata.rules
+
+# Enable inline rule loading
+rule-reload: true
