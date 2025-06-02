@@ -71,32 +71,33 @@ services:
         ipv4_address: 172.28.0.13
 
   suricata:
-    image: jasonish/suricata:latest
+    image: jasonish/suricata
     container_name: suricata
+    network_mode: "container:victim"       # 🔁 utilise l'interface réseau du conteneur victim
     cap_add:
       - NET_ADMIN
-      - NET_RAW
+      - SYS_NICE
     volumes:
-      - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml
-      - ./suricata/rules:/etc/suricata/rules
-      - ./suricata/logs:/var/log/suricata
-    command: -i eth0
-    networks:
-      elk_net:
-        ipv4_address: 172.28.0.14
+      - ./suricata:/etc/suricata
+      - ./logs:/var/log/suricata
+    command: >
+      suricata -c /etc/suricata/suricata.yaml -i eth0
+    depends_on:
+      - victim
+
 
   victim:
-    build:
-      context: ./victim
-      dockerfile: Dockerfile.victim
-    container_name: victim
-    tty: true
-    stdin_open: true
-    dns:
-      - 8.8.8.8
-    networks:
-      elk_net:
-        ipv4_address: 172.28.0.15
+   build:
+     context: ./victim
+     dockerfile: Dockerfile.victim
+   container_name: victim
+   tty: true
+   stdin_open: true
+   dns:
+     - 8.8.8.8
+   networks:
+     elk_net:
+       ipv4_address: 172.28.0.15
 
   kali:
     build:
@@ -105,6 +106,11 @@ services:
     container_name: kali
     tty: true
     stdin_open: true
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
     networks:
       elk_net:
         ipv4_address: 172.28.0.16

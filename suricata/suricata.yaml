@@ -1,10 +1,9 @@
 %YAML 1.1
 ---
-# Suricata configuration file for Docker-based deployment
 
 vars:
   address-groups:
-    HOME_NET: "[172.28.0.0/16]"   # même subnet que docker-compose
+    HOME_NET: "[172.28.0.0/24]"
     EXTERNAL_NET: "!$HOME_NET"
 
 default-log-dir: /var/log/suricata
@@ -17,7 +16,6 @@ af-packet:
     use-mmap: yes
 
 outputs:
-
   - eve-log:
       enabled: yes
       filetype: regular
@@ -41,7 +39,7 @@ outputs:
         - stats:
             totals: yes
             threads: yes
-        - fileinfo
+        #- fileinfo
         - anomaly
 
   - stats:
@@ -74,8 +72,10 @@ threading:
         prio: "high"
 
 # Rule sources
+default-rule-path: /etc/suricata/rules
+
 rule-files:
-  - /etc/suricata/rules/suricata.rules
+  - suricata.rules
 
 # Enable inline rule loading
 rule-reload: true
