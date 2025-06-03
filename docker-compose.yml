@@ -79,11 +79,25 @@ services:
       - SYS_NICE
     volumes:
       - ./suricata:/etc/suricata
-      - ./logs:/var/log/suricata
+      - suricata-logs:/var/log/suricata
     command: >
       suricata -c /etc/suricata/suricata.yaml -i eth0
     depends_on:
       - victim
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.4
+    container_name: filebeat
+    user: root
+    command: ["--strict.perms=false"]  # ← désactive la vérification des permissions
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - suricata-logs:/var/log/suricata:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - elasticsearch
+    network_mode: host
 
 
   victim:
@@ -117,3 +131,4 @@ services:
 
 volumes:
   esdata:
+  suricata-logs:
