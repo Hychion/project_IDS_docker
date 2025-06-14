@@ -35,7 +35,7 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://172.28.0.10:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD="A_V74ti4Tf1lELGLTD=-" # TODO Update if reboot
+      - ELASTICSEARCH_PASSWORD="4NI4*zgD3ZDij0CnpJZB" # TODO Update if reboot
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=5601
@@ -54,51 +54,36 @@ services:
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
     container_name: logstash
+    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
     volumes:
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-      - ./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-      - ./suricata/logs:/mnt/suricata
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config:/usr/share/logstash/config
+      - ./logstash/data:/usr/share/logstash/data
+      - ./suricata/logs:/var/log/suricata:ro # le bug que j'avais ./suri  cata/...
     environment:
       - LS_JAVA_OPTS=-Xms1g -Xmx2g
-      - xpack.monitoring.enabled=false
-      - ELASTICSEARCH_HOSTS=http://172.28.0.10:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD="H05OjtPuQI-F2_CK-yUt"  # TODO Update if reboot
     depends_on:
       - elasticsearch
     networks:
       elk_net:
         ipv4_address: 172.28.0.13
 
+
   suricata:
     image: jasonish/suricata
     container_name: suricata
-    network_mode: "container:victim"       # 🔁 utilise l'interface réseau du conteneur victim
+    network_mode: "container:victim"
     cap_add:
       - NET_ADMIN
       - SYS_NICE
     volumes:
       - ./suricata:/etc/suricata
-      - suricata-logs:/var/log/suricata
+      - ./suricata/logs:/var/log/suricata
+      - logstash_data:/usr/share/logstash/data
     command: >
       suricata -c /etc/suricata/suricata.yaml -i eth0
     depends_on:
       - victim
-
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:8.13.4
-    container_name: filebeat
-    user: root
-    command: ["--strict.perms=false"]  # ← désactive la vérification des permissions
-    volumes:
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - suricata-logs:/var/log/suricata:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    depends_on:
-      - elasticsearch
-    network_mode: host
-
 
   victim:
    build:
@@ -107,6 +92,8 @@ services:
    container_name: victim
    tty: true
    stdin_open: true
+   ports:
+     - '3306:3306'
    dns:
      - 8.8.8.8
    networks:
@@ -131,4 +118,4 @@ services:
 
 volumes:
   esdata:
-  suricata-logs:
+  logstash_data:
