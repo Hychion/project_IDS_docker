@@ -10,7 +10,7 @@ alert tcp any any -> any 21 ( msg:"FTP Brute Force Detected"; flags:S; flow:to_s
 # MySQL Brute Force
 alert tcp any any -> any 3306 (msg:"MySQL Brute Force Detected"; flags:S; flow:to_server; threshold:type threshold, track by_src, count 5, seconds 10; sid:1000013; rev:3;)
 
-alert icmp any any -> any any ( msg:"[DEMO] ICMP Ping Detected"; sid:1000020; rev:1; flags:S;)
+alert icmp any any -> any any ( msg:"[DEMO] ICMP Ping Detected"; sid:1000020; rev:1;)
 
 
 #alert tcp any any -> any any (msg:"TEST simple TCP rule"; sid:1000001; rev:1;)

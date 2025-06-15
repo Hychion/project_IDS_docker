@@ -1,13 +1,17 @@
 version: "3.8"
 
 networks:
-  elk_net:
+  attack-net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.28.0.0/24
-          gateway: 172.28.0.1
+        - subnet: 192.168.100.0/24
 
+  log-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.200.0/24
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
@@ -26,16 +30,16 @@ services:
         soft: -1
         hard: -1
     networks:
-      elk_net:
-        ipv4_address: 172.28.0.10
+      log-net:
+        ipv4_address: 192.168.200.10
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.2
     container_name: kibana
     environment:
-      - ELASTICSEARCH_HOSTS=http://172.28.0.10:9200
+      - ELASTICSEARCH_HOSTS=http://192.168.200.10:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD="4NI4*zgD3ZDij0CnpJZB" # TODO Update if reboot
+      - ELASTICSEARCH_PASSWORD="9jIAu_ubM7RxwgGfdPxq" # TODO Update if reboot
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=5601
@@ -48,8 +52,8 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      elk_net:
-        ipv4_address: 172.28.0.12
+      log-net:
+        ipv4_address: 192.168.200.12
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
@@ -65,8 +69,8 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      elk_net:
-        ipv4_address: 172.28.0.13
+      log-net:
+        ipv4_address: 192.168.200.11
 
 
   suricata:
@@ -97,8 +101,10 @@ services:
    dns:
      - 8.8.8.8
    networks:
-     elk_net:
-       ipv4_address: 172.28.0.15
+     attack-net:
+        ipv4_address: 192.168.100.20
+     log-net:
+        ipv4_address: 192.168.200.20
 
   kali:
     build:
@@ -113,8 +119,8 @@ services:
       - NET_RAW
       - SYS_ADMIN
     networks:
-      elk_net:
-        ipv4_address: 172.28.0.16
+      attack-net:
+        ipv4_address: 192.168.100.10
 
 volumes:
   esdata:
